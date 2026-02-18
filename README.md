@@ -1,112 +1,65 @@
-# Telegram Crypto Safety Sentinel 🛡️
-A production-style **Telegram bot + backend service** that helps protect crypto communities from modern scams:
-**phishing links, fake airdrops, “connect wallet” drains, address poisoning, and suspicious token/contract links.**
+# Telegram Crypto Safety Sentinel
+A starter Telegram bot backend for crypto scam detection and moderation, built with C#/.NET 8.
 
-Built with **.NET 8**, **Docker**, **EF Core migrations**, and security-minded engineering (rate limiting, audit logs, permissions, safe defaults).
+Current starter implementation includes:
+- message scanning heuristics for phishing/lure phrases and risky URLs
+- Ethereum checksum checks and wallet lookalike/poisoning detection signals
+- moderation modes (`Off`, `Report`, `Quarantine`, `AutoDelete`)
+- admin command to change mode (`/mode`)
+- idempotent update handling, in-memory rate limiting, and audit logging
+- EF Core database layer (Postgres or SQLite) and Docker Compose setup
 
----
+## Project Layout
+- `src/Sentinel.Bot/Program.cs` host startup and DI wiring
+- `src/Sentinel.Bot/Services/` scanner, polling, moderation, rate limiter
+- `src/Sentinel.Bot/Data/` EF Core DbContext and entities
+- `docker-compose.yml` app + Postgres stack
+- `.env.example` environment template
 
-## Why this exists (modern crypto safety problem)
-Crypto Telegram groups are heavily targeted by:
-- **Airdrop scams** and “claim now” drain sites
-- **Fake support/admin impersonation** pushing links
-- **Malicious “connect wallet” dApps** and sign-message traps
-- **Address poisoning** (lookalike wallet addresses pasted in chat)
-- **Fake token contracts** and misleading explorer links
+## First Steps (VS Code, Windows)
+1. Install prerequisites:
+   - .NET 8 SDK
+   - VS Code extensions: `C# Dev Kit` and `C#`
+   - Docker Desktop (optional, but recommended)
+2. Open this folder in VS Code.
+3. Copy env template and set your bot token:
+   ```powershell
+   Copy-Item .env.example .env
+   ```
+4. Edit `.env` and set `TELEGRAM_BOT_TOKEN`.
 
-Crypto Safety Sentinel reduces risk by automatically scanning messages and replying with a **risk report** and applying a configured moderation action.
+## Run Option A: Docker (Recommended)
+```powershell
+docker compose up --build
+```
 
----
+## Run Option B: Local in VS Code
+1. Use SQLite for local dev (no Postgres needed):
+   ```powershell
+   $env:DB_PROVIDER="sqlite"
+   $env:TELEGRAM_BOT_TOKEN="YOUR_TOKEN"
+   dotnet restore src/Sentinel.Bot/Sentinel.Bot.csproj
+   dotnet run --project src/Sentinel.Bot/Sentinel.Bot.csproj
+   ```
+2. Keep terminal running while you message the bot in Telegram.
 
-## Features
-### ✅ Core (v1)
-#### 1) Scam link detection
-- Detects common patterns:
-  - **“connect wallet”** / **airdrop** / **claim** / **verify** / **support** bait
-  - Short-link expansion (optional)
-  - Punycode / lookalike domains / suspicious TLDs / IP-in-URL
-- Optional reputation providers (pluggable):
-  - VirusTotal URL checks (if enabled)
-  - Custom domain blocklists/allowlists
+## Bot Commands
+- `/help` or `/start` show command help
+- `/scan <text-or-url>` run manual risk scan
+- `/mode <off|report|quarantine|autodelete>` change moderation mode (admin only in group chats)
 
-#### 2) Wallet address safety checks (EVM + BTC)
-- Detects wallet addresses posted in chat and flags:
-  - **Non-checksummed Ethereum addresses** (EIP-55) as higher risk
-  - **Lookalike addresses** (high similarity to recently-seen addresses in chat)
-  - **Address poisoning patterns** (same prefix/suffix as “trusted” address)
-- Maintains a short “recent trusted addresses” cache per chat for comparison.
+## Notes for Development
+- Default thresholds are controlled with:
+  - `RISK_HIGH_THRESHOLD` (default `70`)
+  - `RISK_MED_THRESHOLD` (default `40`)
+- Rate limiting is controlled with:
+  - `RATE_LIMIT_WINDOW_SECONDS`
+  - `RATE_LIMIT_MAX_MESSAGES`
+- Optional provider keys (`VIRUSTOTAL_API_KEY`, `ETHERSCAN_API_KEY`) are defined but not wired yet in this starter.
 
-#### 3) Contract/token link validation (EVM-focused)
-- Recognises explorer links (Etherscan-like) and extracts:
-  - contract address
-  - chain (if detectable by domain / config)
-- Optional verification checks via explorer APIs (pluggable):
-  - contract verified source (yes/no)
-  - contract age (very new contracts flagged)
-  - token holders/tx count (low activity flagged)
-
-> Note: The bot is designed to work *without* paid APIs. External checks are optional enhancements.
-
-#### 4) Moderation modes (chat-level)
-- `Off` – no action, only responds on `/scan`
-- `Report` – reply with risk report
-- `Quarantine` – delete + repost sanitized warning (requires permissions)
-- `AutoDelete` – delete flagged messages (requires permissions)
-
-#### 5) Admin controls + configuration
-- Admin-only commands to set mode, thresholds, allowlists/blocklists, and provider toggles.
-
----
-
-## Security-minded engineering (portfolio signals)
-- **Rate limiting** per user/chat (prevents bot abuse & spam)
-- **Idempotency** for Telegram updates (no double-processing)
-- **Audit logging** with event trails (who/what/why/action)
-- **Secrets-safe config** via environment variables (no keys in git)
-- **EF Core migrations** (versioned schema + reproducible deployments)
-- **Structured logging** (Serilog) with correlation IDs
-
----
-
-## Tech Stack
-- **.NET 8**
-- **Telegram.Bot**
-- **EF Core** (+ migrations)
-- **PostgreSQL** (recommended) or SQLite (dev)
-- **Serilog**
-- **Docker + Docker Compose**
-
-Optional providers:
-- VirusTotal (URLs)
-- Explorer APIs (Etherscan-like) for contract metadata
-- Your own JSON feeds for known scam domains / addresses
-
----
-
-## Quick Start (Docker)
-### 1) Prereqs
-- Docker + Docker Compose
-
-### 2) Create a Telegram bot token
-1. Message **@BotFather**
-2. Create a bot and copy the token
-
-### 3) Configure environment variables
-Create a `.env` file in the repo root:
-
-```env
-TELEGRAM_BOT_TOKEN=YOUR_TOKEN_HERE
-
-DB_HOST=db
-DB_PORT=5432
-DB_NAME=sentinel
-DB_USER=sentinel
-DB_PASSWORD=sentinel_password
-
-# Optional providers (leave blank to run in heuristic-only mode)
-VIRUSTOTAL_API_KEY=
-ETHERSCAN_API_KEY=
-
-# Risk scoring
-RISK_HIGH_THRESHOLD=70
-RISK_MED_THRESHOLD=40
+## Add EF Migrations (Next)
+After .NET SDK is installed:
+```powershell
+dotnet tool install --global dotnet-ef
+dotnet ef migrations add InitialCreate --project src/Sentinel.Bot/Sentinel.Bot.csproj
+```

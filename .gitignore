@@ -1,0 +1,30 @@
+bin/
+obj/
+.vs/
+.vscode/.history/
+.idea/
+
+# Build output
+artifacts/
+TestResults/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Logs and runtime files
+*.log
+*.db
+*.db-shm
+*.db-wal
+
+# Environment files
+.env
+.env.local
+
+# OS files
+Thumbs.db
+Desktop.ini
+.DS_Store

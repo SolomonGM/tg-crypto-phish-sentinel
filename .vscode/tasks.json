@@ -1,0 +1,38 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "restore",
+      "type": "process",
+      "command": "dotnet",
+      "args": [
+        "restore",
+        "src/Sentinel.Bot/Sentinel.Bot.csproj"
+      ],
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "build",
+      "type": "process",
+      "command": "dotnet",
+      "args": [
+        "build",
+        "src/Sentinel.Bot/Sentinel.Bot.csproj"
+      ],
+      "dependsOn": "restore",
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "run",
+      "type": "process",
+      "command": "dotnet",
+      "args": [
+        "run",
+        "--project",
+        "src/Sentinel.Bot/Sentinel.Bot.csproj"
+      ],
+      "dependsOn": "build",
+      "problemMatcher": "$msCompile"
+    }
+  ]
+}

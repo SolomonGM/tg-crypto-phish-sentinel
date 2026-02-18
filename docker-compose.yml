@@ -1,0 +1,33 @@
+services:
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: crypto-safety-sentinel-bot
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    container_name: crypto-safety-sentinel-db
+    environment:
+      POSTGRES_DB: ${DB_NAME:-sentinel}
+      POSTGRES_USER: ${DB_USER:-sentinel}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-sentinel_password}
+    ports:
+      - "5432:5432"
+    volumes:
+      - sentinel_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-sentinel} -d ${DB_NAME:-sentinel}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  sentinel_db_data:

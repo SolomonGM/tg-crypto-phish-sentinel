@@ -1,0 +1,21 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": ".NET Launch Sentinel Bot",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/src/Sentinel.Bot/bin/Debug/net8.0/Sentinel.Bot.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/Sentinel.Bot",
+      "stopAtEntry": false,
+      "env": {
+        "DB_PROVIDER": "sqlite",
+        "SQLITE_CONNECTION": "Data Source=sentinel.db",
+        "TELEGRAM_BOT_TOKEN": "replace_with_botfather_token"
+      },
+      "console": "integratedTerminal"
+    }
+  ]
+}
